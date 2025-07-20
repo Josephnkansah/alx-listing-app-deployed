@@ -1,7 +1,7 @@
-import { useRouter } from "next/router";
-import axios from "axios";
-import { useState, useEffect } from "react";
-import PropertyDetail from "@/components/property/PropertyDetail";
+// pages/property/[id].tsx
+
+import { GetServerSideProps } from 'next';
+import PropertyDetail from '@/components/property/PropertyDetail';
 
 interface Property {
   id: number;
@@ -10,36 +10,24 @@ interface Property {
   price: string;
   image: string;
   description?: string;
-  amenities?: string[];
 }
 
-export default function PropertyDetailPage() {
-  const router = useRouter();
-  const { id } = router.query;
-  const [property, setProperty] = useState<Property | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+interface Props {
+  property: Property;
+}
 
-  useEffect(() => {
-    const fetchProperty = async () => {
-      if (!id) return;
-      try {
-        const response = await axios.get(`/api/properties/${id}`);
-        setProperty(response.data);
-      } catch (err) {
-        console.error("Error fetching property details:", err);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProperty();
-  }, [id]);
-
-  if (loading) return <p className="text-center">Loading property...</p>;
-
-  if (error || !property) return <p className="text-center text-red-500">Property not found.</p>;
-
+const PropertyPage = ({ property }: Props) => {
   return <PropertyDetail property={property} />;
-}
+};
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { id } = context.params!;
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/properties/${id}`);
+  const property = await res.json();
+
+  return {
+    props: { property },
+  };
+};
+
+export default PropertyPage;
